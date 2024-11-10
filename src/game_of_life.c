@@ -1,6 +1,6 @@
 #include "game_of_life.h"
 
-GameOfLifeInstance* create_game_of_life_instance(uint n, uint m){
+GameOfLifeInstance* create_game_of_life_instance(int n, int m){
   GameOfLifeInstance* instance = (GameOfLifeInstance *) malloc(sizeof(GameOfLifeInstance)); 
   check_allocation(instance);
 
@@ -10,11 +10,11 @@ GameOfLifeInstance* create_game_of_life_instance(uint n, uint m){
   instance->board = (CellStates **) malloc(n * sizeof(CellStates *)); 
   check_allocation(instance->board); 
 
-  for (uint i = 0; i < n; i++){
+  for (int i = 0; i < n; i++){
     instance->board[i] = (CellStates *) malloc(m * sizeof(CellStates));
     check_allocation(instance->board[i]);
 
-    for (uint j = 0; j < m; j++)
+    for (int j = 0; j < m; j++)
       instance->board[i][j] = UNKNOWN; 
   }
   
@@ -22,7 +22,7 @@ GameOfLifeInstance* create_game_of_life_instance(uint n, uint m){
 }
 
 void print_game_of_life_instance(GameOfLifeInstance* instance){
-  uint n, m, i, j;
+  int n, m, i, j;
 
   n = instance->n; 
   m = instance->m;
@@ -37,21 +37,241 @@ void print_game_of_life_instance(GameOfLifeInstance* instance){
 }
 
 void memory_free_game_of_life_instance(GameOfLifeInstance* instance) {
-  for (uint i = 0; i < instance->n; i++) free(instance->board[i]);
+  for (int i = 0; i < instance->n; i++) free(instance->board[i]);
   free(instance->board);
   free(instance);
 }
 
+Neighborhood* create_neighborhood(){
+  Neighborhood* neighborhood = (Neighborhood *) malloc(sizeof(Neighborhood));
+  check_allocation(neighborhood); 
+
+  neighborhood->my_neighbors_state = (CellStates *) malloc(NEIGHBORHOOD_SIZE * sizeof(CellStates));
+  check_allocation(neighborhood->my_neighbors_state);
+
+  for (int i = 0; i < NEIGHBORHOOD_SIZE; i++)
+    neighborhood->my_neighbors_state[i] = UNKNOWN;
+
+  return neighborhood; 
+}
+
+void memory_free_neighborhood(Neighborhood* neighborhood){
+  free(neighborhood->my_neighbors_state); 
+  free(neighborhood);
+}
+
+GlobalNeighborhoodIdentifiers* create_global_neighborhood_identifiers(int n, int m){
+  GlobalNeighborhoodIdentifiers* neighborhood_identifiers = (GlobalNeighborhoodIdentifiers *) malloc(sizeof(GlobalNeighborhoodIdentifiers));
+  check_allocation(neighborhood_identifiers); 
+
+  neighborhood_identifiers->n = n; 
+  neighborhood_identifiers->m = m;
+
+  neighborhood_identifiers->identifiers = (int **) malloc(n * sizeof(int *));
+  check_allocation(neighborhood_identifiers->identifiers);
+
+  int current_identifier = 1; 
+  for (int i = 0; i < n; i++){
+    neighborhood_identifiers->identifiers[i] = (int *) malloc(m * sizeof(int));
+    check_allocation(neighborhood_identifiers->identifiers[i]);
+
+    for (int j = 0; j < m; j++)
+      neighborhood_identifiers->identifiers[i][j] = current_identifier++; 
+  }
+  
+  return neighborhood_identifiers;
+}
+
+void memory_free_global_neighborhood_identifiers(GlobalNeighborhoodIdentifiers* neighborhood_identifiers){
+  for (int i = 0; i < neighborhood_identifiers->n; i++) free(neighborhood_identifiers->identifiers[i]);
+
+  free(neighborhood_identifiers->identifiers); 
+  free(neighborhood_identifiers);
+}
+
+void loneliness(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* _neighborhood){
+  int i, j, n, m; 
+
+  n = set->subsets_count; 
+  m = set->subsets_size;
+
+  for (i = 0; i < n; i++)
+  {
+    for (j = 0; j < m - 1; j++)
+      fprintf(bcnf_file, "%d ", set->subsets[i][j]);
+    fprintf(bcnf_file, "%d 0\n", set->subsets[i][j]);
+  }
+}
+
+void stagnation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood){
+  int difference_set[NEIGHBORHOOD_SIZE];
+  int difference_set_size, i, j, n, m; 
+
+  n = set->subsets_count; 
+  m = set->subsets_size; 
+
+  for (i = 0; i < n; i++)
+  {
+    fprintf(bcnf_file, "%d ", neighborhood->my_identifier);
+    for (j = 0; j < m; j++)
+      fprintf(bcnf_file, "-%d ", set->subsets[i][j]);
+    
+    compute_difference_set(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, set->subsets[i], m, difference_set, &difference_set_size);
+    for (j = 0; j < difference_set_size - 1; j++)
+      fprintf(bcnf_file, "%d ", difference_set[j]);
+    fprintf(bcnf_file, "%d 0\n", difference_set[j]);
+  }
+}
+
+void overcrowding(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* _neighborhood){
+  int i, j, n, m; 
+
+  n = set->subsets_count; 
+  m = set->subsets_size;
+
+  for (i = 0; i < n; i++)
+  {
+    for (j = 0; j < m - 1; j++)
+      fprintf(bcnf_file, "-%d ", set->subsets[i][j]);
+    fprintf(bcnf_file, "-%d 0\n", set->subsets[i][j]);
+  }
+}
+
+void preservation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood){
+  int difference_set[NEIGHBORHOOD_SIZE];
+  int difference_set_size, i, j, n, m; 
+
+  n = set->subsets_count; 
+  m = set->subsets_size; 
+
+  for (i = 0; i < n; i++)
+  {
+    fprintf(bcnf_file, "-%d ", neighborhood->my_identifier);
+    for (j = 0; j < m; j++)
+      fprintf(bcnf_file, "-%d ", set->subsets[i][j]);
+    
+    compute_difference_set(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, set->subsets[i], m, difference_set, &difference_set_size);
+    for (j = 0; j < difference_set_size - 1; j++)
+      fprintf(bcnf_file, "%d ", difference_set[j]);
+    fprintf(bcnf_file, "%d 0\n", difference_set[j]);
+  }
+}
+
+void life(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood){
+  int difference_set[NEIGHBORHOOD_SIZE];
+  int difference_set_size, i, j, n, m; 
+
+  n = set->subsets_count; 
+  m = set->subsets_size; 
+
+  for (i = 0; i < n; i++)
+  {
+    for (j = 0; j < m; j++)
+      fprintf(bcnf_file, "-%d ", set->subsets[i][j]);
+    
+    compute_difference_set(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, set->subsets[i], m, difference_set, &difference_set_size);
+    for (j = 0; j < difference_set_size - 1; j++)
+      fprintf(bcnf_file, "%d ", difference_set[j]);
+    fprintf(bcnf_file, "%d 0\n", difference_set[j]);
+  }
+} 
+
 GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instance){
   GameOfLifeInstance* previous_instance_state;
-  uint n, m; 
+  Neighborhood* neighborhood;
+  FILE* bcnf_file;
+  GlobalNeighborhoodIdentifiers* global_neighborhood_identifiers;
+  SetOfSubsets *set_of_subsets_of_cardinality_7, *set_of_subsets_of_cardinality_2, 
+               *set_of_subsets_of_cardinality_4, *set_of_subsets_of_cardinality_3;
+  int i, j, n, m;
 
-  n = instance->n; 
+  n = instance->n;
   m = instance->m;
 
+  bcnf_file = fopen("bcnf.txt", "w");
+  check_allocation(bcnf_file);
+
   previous_instance_state = create_game_of_life_instance(n, m);
-  check_allocation(previous_instance_state); 
+  neighborhood = create_neighborhood();
+  global_neighborhood_identifiers = create_global_neighborhood_identifiers(n + 2, m + 2);
+
+  for (i = 0; i < n; i++)
+  {
+    for (j = 0; j < m; j++)
+    {
+      update_neighborhood(neighborhood, previous_instance_state, global_neighborhood_identifiers, i, j);
+
+      fill_bcnf_file_with_neighborhood_values(bcnf_file, neighborhood);
+      
+      set_of_subsets_of_cardinality_2 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 2);
+
+      if (instance->board[i][j] == ALIVED){
+        set_of_subsets_of_cardinality_7 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 7);
+        set_of_subsets_of_cardinality_4 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 4);
+
+        loneliness(bcnf_file, set_of_subsets_of_cardinality_7, neighborhood);
+        stagnation(bcnf_file, set_of_subsets_of_cardinality_2, neighborhood);
+        overcrowding(bcnf_file, set_of_subsets_of_cardinality_4, neighborhood);
+
+        memory_free_set_of_subsets(set_of_subsets_of_cardinality_7);
+        memory_free_set_of_subsets(set_of_subsets_of_cardinality_4);
+      } else if (instance->board[i][j] == DEAD){
+        set_of_subsets_of_cardinality_3 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 3);
+
+        preservation(bcnf_file, set_of_subsets_of_cardinality_2, neighborhood);
+        life(bcnf_file, set_of_subsets_of_cardinality_3, neighborhood);
+
+        memory_free_set_of_subsets(set_of_subsets_of_cardinality_3);
+      }
+
+      memory_free_set_of_subsets(set_of_subsets_of_cardinality_2);
+    }
+  }
+  
+  memory_free_neighborhood(neighborhood);
+  memory_free_global_neighborhood_identifiers(global_neighborhood_identifiers);
+  fclose(bcnf_file);
 
   return previous_instance_state;
+}
+
+SetOfSubsets* create_set_of_subsets(int subsets_count, int subsets_size){
+  SetOfSubsets* set = (SetOfSubsets *) malloc(sizeof(SetOfSubsets));
+  check_allocation(set);
+
+  set->subsets_count = subsets_count; 
+  set->subsets_size = subsets_size;
+
+  set->subsets = (int **) malloc(subsets_count * sizeof(int *));
+  check_allocation(set->subsets);
+
+  for (int i = 0; i < subsets_count; i++)
+  {
+    set->subsets[i] = (int *) malloc(subsets_size * sizeof(int));
+    check_allocation(set->subsets[i]);
+  }
+  
+  return set;
+}
+
+void memory_free_set_of_subsets(SetOfSubsets *set){
+  for (int i = 0; i < set->subsets_count; i++) free(set->subsets[i]);
+  free(set->subsets);
+  free(set);
+}
+
+void compute_subsets(int* entry_set, int entry_set_size, int* subset, int subset_size, int start, int desired_subset_size, SetOfSubsets* set, int* subset_count) {
+  if (subset_size == desired_subset_size) {
+    for (int i = 0; i < desired_subset_size; i++)
+      set->subsets[*subset_count][i] = subset[i];
+
+    (*subset_count)++;
+    return;
+  }
+
+  for (int i = start; i < entry_set_size; i++) {
+    subset[subset_size] = entry_set[i];
+    compute_subsets(entry_set, entry_set_size, subset, subset_size + 1, i + 1, desired_subset_size, set, subset_count);
+  }
 }
 
