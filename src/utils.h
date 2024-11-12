@@ -12,7 +12,8 @@ void read_board_entirely(GameOfLifeInstance* instance);
 void update_neighborhood(Neighborhood* neighborhood, GameOfLifeInstance* instance, GlobalNeighborhoodIdentifiers* global_neighborhood_identifiers, int x, int y);
 int C(int n, int x);
 SetOfSubsets* compute_set_of_subsets_of_cardinality_x(int* entry_set, int entry_set_size, int subsets_size);
-void fill_bcnf_file_with_neighborhood_values(FILE* bcnf_file, Neighborhood* neighborhood);
+void fill_bcnf_file_with_neighborhood_values(FILE* bcnf_file, Neighborhood* neighborhood, int* quantity_of_clauses);
 void compute_difference_set(int* set_a, int set_a_size, int* set_b, int set_b_size, int* result_set, int* result_set_size);
+void fill_bcnf_file_header(FILE* bcnf_file, int quantity_of_literals, int quantity_of_clauses);
 
 #endif
