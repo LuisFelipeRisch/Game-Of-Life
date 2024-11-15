@@ -89,7 +89,7 @@ void memory_free_global_neighborhood_identifiers(GlobalNeighborhoodIdentifiers* 
   free(neighborhood_identifiers);
 }
 
-void loneliness(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* _neighborhood, int* quantity_of_clauses){
+void loneliness(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* _neighborhoodm, int top_weight, int* quantity_of_clauses){
   int i, j, n, m; 
 
   n = set->subsets_count; 
@@ -98,13 +98,14 @@ void loneliness(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* _neighborhood,
 
   for (i = 0; i < n; i++)
   {
+    fprintf(bcnf_file, "%d ", top_weight);
     for (j = 0; j < m - 1; j++)
       fprintf(bcnf_file, "%d ", set->subsets[i][j]);
     fprintf(bcnf_file, "%d 0\n", set->subsets[i][j]);
   }
 }
 
-void stagnation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, int* quantity_of_clauses){
+void stagnation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, int top_weight, int* quantity_of_clauses){
   int difference_set[NEIGHBORHOOD_SIZE];
   int difference_set_size, i, j, n, m; 
 
@@ -114,7 +115,7 @@ void stagnation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, 
 
   for (i = 0; i < n; i++)
   {
-    fprintf(bcnf_file, "%d ", neighborhood->my_identifier);
+    fprintf(bcnf_file, "%d %d ", top_weight, neighborhood->my_identifier);
     for (j = 0; j < m; j++)
       fprintf(bcnf_file, "-%d ", set->subsets[i][j]);
     
@@ -125,7 +126,7 @@ void stagnation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, 
   }
 }
 
-void overcrowding(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* _neighborhood, int* quantity_of_clauses){
+void overcrowding(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* _neighborhood, int top_weight, int* quantity_of_clauses){
   int i, j, n, m; 
 
   n = set->subsets_count; 
@@ -134,13 +135,14 @@ void overcrowding(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* _neighborhoo
 
   for (i = 0; i < n; i++)
   {
+    fprintf(bcnf_file, "%d ", top_weight);
     for (j = 0; j < m - 1; j++)
       fprintf(bcnf_file, "-%d ", set->subsets[i][j]);
     fprintf(bcnf_file, "-%d 0\n", set->subsets[i][j]);
   }
 }
 
-void preservation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, int* quantity_of_clauses){
+void preservation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, int top_weight, int* quantity_of_clauses){
   int difference_set[NEIGHBORHOOD_SIZE];
   int difference_set_size, i, j, n, m; 
 
@@ -150,7 +152,7 @@ void preservation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood
 
   for (i = 0; i < n; i++)
   {
-    fprintf(bcnf_file, "-%d ", neighborhood->my_identifier);
+    fprintf(bcnf_file, "%d -%d ", top_weight, neighborhood->my_identifier);
     for (j = 0; j < m; j++)
       fprintf(bcnf_file, "-%d ", set->subsets[i][j]);
     
@@ -161,7 +163,7 @@ void preservation(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood
   }
 }
 
-void life(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, int* quantity_of_clauses){
+void life(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, int top_weight, int* quantity_of_clauses){
   int difference_set[NEIGHBORHOOD_SIZE];
   int difference_set_size, i, j, n, m; 
 
@@ -171,6 +173,7 @@ void life(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, int* q
 
   for (i = 0; i < n; i++)
   {
+    fprintf(bcnf_file, "%d ", top_weight);
     for (j = 0; j < m; j++)
       fprintf(bcnf_file, "-%d ", set->subsets[i][j]);
     
@@ -189,13 +192,14 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
   SetOfSubsets *set_of_subsets_of_cardinality_7, *set_of_subsets_of_cardinality_2, 
                *set_of_subsets_of_cardinality_4, *set_of_subsets_of_cardinality_3;
   int i, j, n, m;
-  int quantity_of_clauses, quantity_of_literals;
+  int quantity_of_clauses, quantity_of_literals, top_weight;
 
   n = instance->n;
   m = instance->m;
 
   quantity_of_clauses = 0;
   quantity_of_literals = (n + 2) * (m + 2);
+  top_weight = (n + 2) * (m + 2);
 
   bcnf_file = fopen("bcnf_clauses.txt", "w");
   check_allocation(bcnf_file);
@@ -209,7 +213,7 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
     {
       update_neighborhood(neighborhood, previous_instance_state, global_neighborhood_identifiers, i, j);
 
-      fill_bcnf_file_with_neighborhood_values(bcnf_file, neighborhood, &quantity_of_clauses);
+      fill_bcnf_file_with_neighborhood_values(bcnf_file, neighborhood, top_weight, &quantity_of_clauses);
       
       set_of_subsets_of_cardinality_2 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 2);
 
@@ -217,24 +221,26 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
         set_of_subsets_of_cardinality_7 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 7);
         set_of_subsets_of_cardinality_4 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 4);
 
-        loneliness(bcnf_file, set_of_subsets_of_cardinality_7, neighborhood, &quantity_of_clauses);
-        stagnation(bcnf_file, set_of_subsets_of_cardinality_2, neighborhood, &quantity_of_clauses);
-        overcrowding(bcnf_file, set_of_subsets_of_cardinality_4, neighborhood, &quantity_of_clauses);
+        loneliness(bcnf_file, set_of_subsets_of_cardinality_7, neighborhood, top_weight, &quantity_of_clauses);
+        stagnation(bcnf_file, set_of_subsets_of_cardinality_2, neighborhood, top_weight, &quantity_of_clauses);
+        overcrowding(bcnf_file, set_of_subsets_of_cardinality_4, neighborhood, top_weight, &quantity_of_clauses);
 
         memory_free_set_of_subsets(set_of_subsets_of_cardinality_7);
         memory_free_set_of_subsets(set_of_subsets_of_cardinality_4);
       } else if (instance->board[i][j] == DEAD){
         set_of_subsets_of_cardinality_3 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 3);
 
-        preservation(bcnf_file, set_of_subsets_of_cardinality_2, neighborhood, &quantity_of_clauses);
-        life(bcnf_file, set_of_subsets_of_cardinality_3, neighborhood, &quantity_of_clauses);
+        preservation(bcnf_file, set_of_subsets_of_cardinality_2, neighborhood, top_weight, &quantity_of_clauses);
+        life(bcnf_file, set_of_subsets_of_cardinality_3, neighborhood, top_weight, &quantity_of_clauses);
 
         memory_free_set_of_subsets(set_of_subsets_of_cardinality_3);
       }
 
+      quantity_of_clauses++;
+      fprintf(bcnf_file, "1 -%d 0\n", global_neighborhood_identifiers->identifiers[i + 1][j + 1]);
       memory_free_set_of_subsets(set_of_subsets_of_cardinality_2);
     }
-
+  
   fclose(bcnf_file);
 
   bcnf_result = fopen("bcnf_result.txt", "w");
@@ -243,9 +249,9 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
   bcnf_file = fopen("bcnf_clauses.txt", "r");
   check_allocation(bcnf_file);
 
-  fprintf(bcnf_result, "p cnf %d %d\n", quantity_of_clauses, quantity_of_literals);
+  fprintf(bcnf_result, "p wcnf %d %d %d\n", quantity_of_clauses, quantity_of_literals, top_weight);
 
-  char buffer[1024];
+  char buffer[4024];
   size_t bytes_read;
 
   while ((bytes_read = fread(buffer, 1, sizeof(buffer), bcnf_file)) > 0)
@@ -254,38 +260,53 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
   fclose(bcnf_file);
   fclose(bcnf_result);
 
-  system("./minisat bcnf_result.txt out.txt");
+  system("./open-wbo/open-wbo bcnf_result.txt > out.txt");
 
   sat_solver_output = fopen("out.txt", "r"); 
-  check_allocation(sat_solver_output); 
+  check_allocation(sat_solver_output);
 
-  if (fgets(buffer, sizeof(buffer), sat_solver_output) != NULL) {
-    if (!strncmp(buffer, SATISFIABLE, 3)) {
-      int x, y, literal_value; 
+  while (fgets(buffer, sizeof(buffer), sat_solver_output)) {
+    if (buffer[0] == 's') {
+      if (strstr(buffer, UNSATISFIABLE) != NULL){
+        fprintf(stderr, "\nThe given board is %s\n\n", UNSATISFIABLE);
+        exit(EXIT_FAILURE);
+      } else if (strstr(buffer, SATISFIABLE) != NULL)
+          fprintf(stdout, "\nThe given board is %s, but the solution found was not optimality proven\n\n", SATISFIABLE);
+        else if (strstr(buffer, OPTIMUM_FOUND) != NULL) 
+          fprintf(stdout, "\nThe given board is %s and an optimum solution was found!\n\n", SATISFIABLE);
+    } else if (buffer[0] == 'v') {
+      char *token; 
+      int x, y, literal_value;
 
-      while (fscanf(sat_solver_output, "%d", &literal_value)) {
-        if (literal_value == 0)
-          break;
+      token = strtok(buffer + 1, " \t\n");
+
+      while (token != NULL) {
+        literal_value = atoi(token);
 
         get_identifier_positions_from_global_identifiers(global_neighborhood_identifiers, literal_value, &x, &y); 
-        
+
         if(x == -1 || y == -1){
           fprintf(stderr, "Unknown Literal! %d", literal_value); 
           exit(EXIT_FAILURE);
         }
 
         x--; 
-        y--; 
+        y--;
 
-        if (outside_the_board_limits(x, y, n, m))
+        if (outside_the_board_limits(x, y, n, m)){
+          token = strtok(NULL, " \t\n");
           continue;
-
+        }
+        
         previous_instance_state->board[x][y] = literal_value < 0 ? DEAD : ALIVED;
-      }   
+
+        token = strtok(NULL, " \t\n");
+      }
     }
   }
 
   fclose(sat_solver_output);
+
   memory_free_neighborhood(neighborhood);
   memory_free_global_neighborhood_identifiers(global_neighborhood_identifiers);
 

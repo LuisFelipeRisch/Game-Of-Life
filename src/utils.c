@@ -103,7 +103,7 @@ void compute_difference_set(int* set_a, int set_a_size, int* set_b, int set_b_si
     }
 }
 
-void fill_bcnf_file_with_neighborhood_values(FILE* bcnf_file, Neighborhood* neighborhood, int* quantity_of_clauses){
+void fill_bcnf_file_with_neighborhood_values(FILE* bcnf_file, Neighborhood* neighborhood, int top_weight, int* quantity_of_clauses){
   CellStates neighborhood_state;
 
   for (int i = 0; i < NEIGHBORHOOD_SIZE; i++){
@@ -112,9 +112,9 @@ void fill_bcnf_file_with_neighborhood_values(FILE* bcnf_file, Neighborhood* neig
       continue;
     
     if (neighborhood_state == ALIVED)
-      fprintf(bcnf_file, "%d 0\n", neighborhood->my_neighbors_identifiers[i]); 
+      fprintf(bcnf_file, "%d %d 0\n", top_weight, neighborhood->my_neighbors_identifiers[i]); 
     else if (neighborhood_state == DEAD)
-      fprintf(bcnf_file, "-%d 0\n", neighborhood->my_neighbors_identifiers[i]);
+      fprintf(bcnf_file, "%d -%d 0\n", top_weight, neighborhood->my_neighbors_identifiers[i]);
 
     (*quantity_of_clauses)++;
   }

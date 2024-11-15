@@ -2,9 +2,9 @@
 #define DEFINITIONS_H
 
 #define NEIGHBORHOOD_SIZE 8
-#define SATISFIABLE "SAT"
-#define UNSATISFIABLE "UNSAT"
-
+#define SATISFIABLE "SATISFIABLE"
+#define UNSATISFIABLE "UNSATISFIABLE"
+#define OPTIMUM_FOUND "OPTIMUM FOUND"
 
 typedef enum CellStates CellStates;
 typedef struct GameOfLifeInstance GameOfLifeInstance;
