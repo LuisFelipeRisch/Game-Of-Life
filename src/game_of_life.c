@@ -342,6 +342,9 @@ int count_living_neighbors(GameOfLifeInstance *instance, int x, int y){
   for (i = x - 1; i <= x + 1; i++)
     for (j = y - 1; j <= y + 1; j++)
     {
+      if (i == x && j == y)
+        continue;
+
       if (outside_the_board_limits(i, j, n, m))
         continue;
       
