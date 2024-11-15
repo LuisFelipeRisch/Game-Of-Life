@@ -126,4 +126,27 @@ void fill_bcnf_file_header(FILE* bcnf_file, int quantity_of_literals, int quanti
   fprintf(bcnf_file, "p cnf %d %d\n", quantity_of_literals, quantity_of_clauses);
 }
 
+void get_identifier_positions_from_global_identifiers(GlobalNeighborhoodIdentifiers* global_identifiers, int desired_identifier, int* x, int* y) {
+  int i, j, actual_desired_identifier, found;
+
+  actual_desired_identifier = desired_identifier; 
+  if (actual_desired_identifier < 0)
+    actual_desired_identifier *= -1;
+
+  found = 0;
+
+  *x = -1; 
+  *y = -1;
+
+  for (i = 0; i < global_identifiers->n && !found; i++)
+    for (j = 0; j < global_identifiers->m && !found; j++)
+    {
+      if (actual_desired_identifier == global_identifiers->identifiers[i][j]){
+        found = 1; 
+        *(x) = i; 
+        *(y) = j;
+      }
+    }
+}
+
 

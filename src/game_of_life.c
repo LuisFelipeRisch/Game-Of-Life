@@ -184,7 +184,7 @@ void life(FILE* bcnf_file, SetOfSubsets* set, Neighborhood* neighborhood, int* q
 GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instance){
   GameOfLifeInstance* previous_instance_state;
   Neighborhood* neighborhood;
-  FILE *bcnf_file, *bcnf_result;
+  FILE *bcnf_file, *bcnf_result, *sat_solver_output;
   GlobalNeighborhoodIdentifiers* global_neighborhood_identifiers;
   SetOfSubsets *set_of_subsets_of_cardinality_7, *set_of_subsets_of_cardinality_2, 
                *set_of_subsets_of_cardinality_4, *set_of_subsets_of_cardinality_3;
@@ -235,8 +235,6 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
       memory_free_set_of_subsets(set_of_subsets_of_cardinality_2);
     }
 
-  memory_free_neighborhood(neighborhood);
-  memory_free_global_neighborhood_identifiers(global_neighborhood_identifiers);
   fclose(bcnf_file);
 
   bcnf_result = fopen("bcnf_result.txt", "w");
@@ -252,6 +250,44 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
 
   while ((bytes_read = fread(buffer, 1, sizeof(buffer), bcnf_file)) > 0)
     fwrite(buffer, 1, bytes_read, bcnf_result);
+  
+  fclose(bcnf_file);
+  fclose(bcnf_result);
+
+  system("./minisat bcnf_result.txt out.txt");
+
+  sat_solver_output = fopen("out.txt", "r"); 
+  check_allocation(sat_solver_output); 
+
+  if (fgets(buffer, sizeof(buffer), sat_solver_output) != NULL) {
+    if (!strncmp(buffer, SATISFIABLE, 3)) {
+      int x, y, literal_value; 
+
+      while (fscanf(sat_solver_output, "%d", &literal_value)) {
+        if (literal_value == 0)
+          break;
+
+        get_identifier_positions_from_global_identifiers(global_neighborhood_identifiers, literal_value, &x, &y); 
+        
+        if(x == -1 || y == -1){
+          fprintf(stderr, "Unknown Literal! %d", literal_value); 
+          exit(EXIT_FAILURE);
+        }
+
+        x--; 
+        y--; 
+
+        if (outside_the_board_limits(x, y, n, m))
+          continue;
+
+        previous_instance_state->board[x][y] = literal_value < 0 ? DEAD : ALIVED;
+      }   
+    }
+  }
+
+  fclose(sat_solver_output);
+  memory_free_neighborhood(neighborhood);
+  memory_free_global_neighborhood_identifiers(global_neighborhood_identifiers);
 
   return previous_instance_state;
 }
@@ -294,5 +330,51 @@ void compute_subsets(int* entry_set, int entry_set_size, int* subset, int subset
     subset[subset_size] = entry_set[i];
     compute_subsets(entry_set, entry_set_size, subset, subset_size + 1, i + 1, desired_subset_size, set, subset_count);
   }
+}
+
+int count_living_neighbors(GameOfLifeInstance *instance, int x, int y){
+  int i, j, n, m, count;
+
+  count = 0; 
+  n = instance->n; 
+  m = instance->m; 
+
+  for (i = x - 1; i <= x + 1; i++)
+    for (j = y - 1; j <= y + 1; j++)
+    {
+      if (outside_the_board_limits(i, j, n, m))
+        continue;
+      
+      if (instance->board[i][j] == ALIVED)
+        count++;
+    }
+
+  return count;
+}
+
+int valid_previous_game_of_life_instance(GameOfLifeInstance* previous_instance, GameOfLifeInstance* current_instance) {
+  int i, j, n, m, valid, current_living_neighbors_count; 
+
+  n = previous_instance->n; 
+  m = previous_instance->m; 
+  valid = 1;
+
+  for (i = 0; i < n && valid; i++)
+    for (j = 0; j < m && valid; j++)
+    {
+      current_living_neighbors_count = count_living_neighbors(previous_instance, i, j);
+
+      if (previous_instance->board[i][j] == ALIVED) {
+        if ((current_living_neighbors_count < 2 || current_living_neighbors_count > 3) && current_instance->board[i][j] == ALIVED)
+          valid = 0;
+        else if ((current_living_neighbors_count == 2 || current_living_neighbors_count == 3) && current_instance->board[i][j] == DEAD)
+          valid = 0;
+      } else if (previous_instance->board[i][j] == DEAD){
+        if (current_living_neighbors_count == 3 && current_instance->board[i][j] == DEAD)
+          valid = 0;
+      }
+    }
+  
+  return valid;
 }
 
