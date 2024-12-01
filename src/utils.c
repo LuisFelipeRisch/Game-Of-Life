@@ -149,4 +149,25 @@ void get_identifier_positions_from_global_identifiers(GlobalNeighborhoodIdentifi
     }
 }
 
+void fill_bcnf_file_with_board_limit(FILE* bcnf_file, GlobalNeighborhoodIdentifiers* global_identifiers, int top_weight, int* quantity_of_clauses) {
+  int i, n, m; 
+
+  n = global_identifiers->n; 
+  m = global_identifiers->m; 
+
+  for (i = 0; i < m; i++){
+    fprintf(bcnf_file, "%d -%d 0\n", top_weight, global_identifiers->identifiers[0][i]);
+    fprintf(bcnf_file, "%d -%d 0\n", top_weight, global_identifiers->identifiers[n - 1][i]);
+
+    (*quantity_of_clauses) += 2;
+  }
+
+  for (i = 0; i < n; i++){
+    fprintf(bcnf_file, "%d -%d 0\n", top_weight, global_identifiers->identifiers[i][0]);
+    fprintf(bcnf_file, "%d -%d 0\n", top_weight, global_identifiers->identifiers[i][m - 1]);
+
+    (*quantity_of_clauses) += 2;
+  }
+}
+
 

@@ -17,5 +17,6 @@ void fill_bcnf_file_with_neighborhood_values(FILE* bcnf_file, Neighborhood* neig
 void compute_difference_set(int* set_a, int set_a_size, int* set_b, int set_b_size, int* result_set, int* result_set_size);
 void fill_bcnf_file_header(FILE* bcnf_file, int quantity_of_literals, int quantity_of_clauses);
 void get_identifier_positions_from_global_identifiers(GlobalNeighborhoodIdentifiers* global_identifiers, int desired_identifier, int* x, int* y);
+void fill_bcnf_file_with_board_limit(FILE* bcnf_file, GlobalNeighborhoodIdentifiers* global_identifiers, int top_weight, int* quantity_of_clauses);
 
 #endif

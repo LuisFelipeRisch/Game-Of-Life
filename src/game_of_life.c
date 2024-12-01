@@ -208,13 +208,13 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
   neighborhood = create_neighborhood();
   global_neighborhood_identifiers = create_global_neighborhood_identifiers(n + 2, m + 2);
 
+  fill_bcnf_file_with_board_limit(bcnf_file, global_neighborhood_identifiers, top_weight, &quantity_of_clauses);
+
   for (i = 0; i < n; i++)
     for (j = 0; j < m; j++)
     {
       update_neighborhood(neighborhood, previous_instance_state, global_neighborhood_identifiers, i, j);
-
-      fill_bcnf_file_with_neighborhood_values(bcnf_file, neighborhood, top_weight, &quantity_of_clauses);
-      
+            
       set_of_subsets_of_cardinality_2 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 2);
 
       if (instance->board[i][j] == ALIVED){
