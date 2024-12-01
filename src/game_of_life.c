@@ -279,7 +279,14 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
           continue;
         }
         
-        previous_instance_state->board[x][y] = literal_value < 0 ? DEAD : ALIVED;
+        if (literal_value < 0) {
+          previous_instance_state->board[x][y] = DEAD; 
+          previous_instance_state->dead_cells_count += 1;
+        } else {
+          previous_instance_state->board[x][y] = ALIVED; 
+          previous_instance_state->alived_cells_count += 1;
+        }
+
 
         token = strtok(NULL, " \t\n");
       }
