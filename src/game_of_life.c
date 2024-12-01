@@ -46,17 +46,10 @@ Neighborhood* create_neighborhood(){
   Neighborhood* neighborhood = (Neighborhood *) malloc(sizeof(Neighborhood));
   check_allocation(neighborhood); 
 
-  neighborhood->my_neighbors_state = (CellStates *) malloc(NEIGHBORHOOD_SIZE * sizeof(CellStates));
-  check_allocation(neighborhood->my_neighbors_state);
-
-  for (int i = 0; i < NEIGHBORHOOD_SIZE; i++)
-    neighborhood->my_neighbors_state[i] = UNKNOWN;
-
   return neighborhood; 
 }
 
 void memory_free_neighborhood(Neighborhood* neighborhood){
-  free(neighborhood->my_neighbors_state); 
   free(neighborhood);
 }
 
@@ -214,7 +207,7 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
     for (j = 0; j < m; j++)
     {
       update_neighborhood(neighborhood, previous_instance_state, global_neighborhood_identifiers, i, j);
-            
+
       set_of_subsets_of_cardinality_2 = compute_set_of_subsets_of_cardinality_x(neighborhood->my_neighbors_identifiers, NEIGHBORHOOD_SIZE, 2);
 
       if (instance->board[i][j] == ALIVED){

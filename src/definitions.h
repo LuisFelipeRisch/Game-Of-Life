@@ -29,7 +29,6 @@ struct Neighborhood{
   int my_identifier;
 
   int my_neighbors_identifiers[NEIGHBORHOOD_SIZE];
-  CellStates* my_neighbors_state;
 };
 
 struct SetOfSubsets{

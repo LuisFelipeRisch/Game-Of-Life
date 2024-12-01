@@ -48,13 +48,6 @@ void update_neighborhood(Neighborhood* neighborhood, GameOfLifeInstance* instanc
       counter++;
       
       neighborhood->my_neighbors_identifiers[counter] = global_neighborhood_identifiers->identifiers[i + 1][j + 1];
-
-      if(outside_the_board_limits(i, j, instance->n, instance->m)){
-        neighborhood->my_neighbors_state[counter] = DEAD; 
-        continue;
-      }
-
-      neighborhood->my_neighbors_state[counter] = instance->board[i][j];
     }
 }
 
