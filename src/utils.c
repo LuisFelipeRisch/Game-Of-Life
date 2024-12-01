@@ -23,10 +23,14 @@ void read_board_entirely(GameOfLifeInstance* instance){
         exit(EXIT_FAILURE);
       }
 
-      if(!cell_value)
+      if(!cell_value) {
         instance->board[i][j] = DEAD;
-      else 
+        instance->dead_cells_count += 1;
+      }
+      else {
         instance->board[i][j] = ALIVED;
+        instance->alived_cells_count += 1;
+      }
     }
 }
 
@@ -94,10 +98,8 @@ void compute_difference_set(int* set_a, int set_a_size, int* set_b, int set_b_si
     }
 }
 
-void fill_bcnf_file_header(FILE* bcnf_file, int quantity_of_literals, int quantity_of_clauses){
-  fseek(bcnf_file, 0, SEEK_SET);
-
-  fprintf(bcnf_file, "p cnf %d %d\n", quantity_of_literals, quantity_of_clauses);
+void fill_bcnf_file_header(FILE* bcnf_file, int quantity_of_clauses, int quantity_of_literals, int top_weight){
+  fprintf(bcnf_file, "p wcnf %d %d %d\n", quantity_of_clauses, quantity_of_literals, top_weight);
 }
 
 void get_identifier_positions_from_global_identifiers(GlobalNeighborhoodIdentifiers* global_identifiers, int desired_identifier, int* x, int* y) {
@@ -123,7 +125,7 @@ void get_identifier_positions_from_global_identifiers(GlobalNeighborhoodIdentifi
     }
 }
 
-void fill_bcnf_file_with_board_limit(FILE* bcnf_file, GlobalNeighborhoodIdentifiers* global_identifiers, int top_weight, int* quantity_of_clauses) {
+void fill_bcnf_file_with_board_limit(FILE* bcnf_file, GlobalNeighborhoodIdentifiers* global_identifiers, int top_weight) {
   int i, n, m; 
 
   n = global_identifiers->n; 
@@ -132,16 +134,20 @@ void fill_bcnf_file_with_board_limit(FILE* bcnf_file, GlobalNeighborhoodIdentifi
   for (i = 0; i < m; i++){
     fprintf(bcnf_file, "%d -%d 0\n", top_weight, global_identifiers->identifiers[0][i]);
     fprintf(bcnf_file, "%d -%d 0\n", top_weight, global_identifiers->identifiers[n - 1][i]);
-
-    (*quantity_of_clauses) += 2;
   }
 
   for (i = 0; i < n; i++){
     fprintf(bcnf_file, "%d -%d 0\n", top_weight, global_identifiers->identifiers[i][0]);
     fprintf(bcnf_file, "%d -%d 0\n", top_weight, global_identifiers->identifiers[i][m - 1]);
-
-    (*quantity_of_clauses) += 2;
   }
+}
+
+int compute_total_amount_of_clauses(int alived_cells, int dead_cells, int quantity_of_literals) {
+  int c_2 = C(NEIGHBORHOOD_SIZE, 2); 
+
+  return (C(NEIGHBORHOOD_SIZE, 7) + c_2 + C(NEIGHBORHOOD_SIZE, 4)) * alived_cells +
+         (c_2 + C(NEIGHBORHOOD_SIZE, 3)) * dead_cells + 
+         quantity_of_literals + 4; // esse mais 4 é porque quando eu crio as cláusulas da borda do tabuleiro, eu estou computando duas vezes os cantos (0, 0), (0, m-1), (n-1, 0) e (n-1, m-1)
 }
 
 

@@ -22,6 +22,9 @@ struct GameOfLifeInstance {
   int n; // lines
   int m; // columns
 
+  int alived_cells_count; 
+  int dead_cells_count;
+
   CellStates** board;
 };
 

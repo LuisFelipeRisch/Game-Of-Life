@@ -14,8 +14,9 @@ void update_neighborhood(Neighborhood* neighborhood, GameOfLifeInstance* instanc
 int C(int n, int x);
 SetOfSubsets* compute_set_of_subsets_of_cardinality_x(int* entry_set, int entry_set_size, int subsets_size);
 void compute_difference_set(int* set_a, int set_a_size, int* set_b, int set_b_size, int* result_set, int* result_set_size);
-void fill_bcnf_file_header(FILE* bcnf_file, int quantity_of_literals, int quantity_of_clauses);
+void fill_bcnf_file_header(FILE* bcnf_file, int quantity_of_clauses, int quantity_of_literals, int top_weight);
 void get_identifier_positions_from_global_identifiers(GlobalNeighborhoodIdentifiers* global_identifiers, int desired_identifier, int* x, int* y);
-void fill_bcnf_file_with_board_limit(FILE* bcnf_file, GlobalNeighborhoodIdentifiers* global_identifiers, int top_weight, int* quantity_of_clauses);
+void fill_bcnf_file_with_board_limit(FILE* bcnf_file, GlobalNeighborhoodIdentifiers* global_identifiers, int top_weight);
+int compute_total_amount_of_clauses(int alived_cells, int dead_cells, int quantity_of_literals);
 
 #endif
