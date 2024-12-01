@@ -101,23 +101,6 @@ void compute_difference_set(int* set_a, int set_a_size, int* set_b, int set_b_si
     }
 }
 
-void fill_bcnf_file_with_neighborhood_values(FILE* bcnf_file, Neighborhood* neighborhood, int top_weight, int* quantity_of_clauses){
-  CellStates neighborhood_state;
-
-  for (int i = 0; i < NEIGHBORHOOD_SIZE; i++){
-    neighborhood_state = neighborhood->my_neighbors_state[i];
-    if (neighborhood_state == UNKNOWN)
-      continue;
-    
-    if (neighborhood_state == ALIVED)
-      fprintf(bcnf_file, "%d %d 0\n", top_weight, neighborhood->my_neighbors_identifiers[i]); 
-    else if (neighborhood_state == DEAD)
-      fprintf(bcnf_file, "%d -%d 0\n", top_weight, neighborhood->my_neighbors_identifiers[i]);
-
-    (*quantity_of_clauses)++;
-  }
-}
-
 void fill_bcnf_file_header(FILE* bcnf_file, int quantity_of_literals, int quantity_of_clauses){
   fseek(bcnf_file, 0, SEEK_SET);
 
