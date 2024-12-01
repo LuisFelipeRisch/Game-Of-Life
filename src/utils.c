@@ -37,8 +37,6 @@ int outside_the_board_limits(int i, int j, int n, int m){
 void update_neighborhood(Neighborhood* neighborhood, GameOfLifeInstance* instance, GlobalNeighborhoodIdentifiers* global_neighborhood_identifiers, int x, int y){
   int counter = -1;
 
-  neighborhood->my_x = x; 
-  neighborhood->my_y = y;
   neighborhood->my_identifier = global_neighborhood_identifiers->identifiers[x + 1][y + 1];
 
   for (int i = x - 1; i <= x + 1; i++)

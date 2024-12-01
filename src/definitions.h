@@ -26,8 +26,6 @@ struct GameOfLifeInstance {
 };
 
 struct Neighborhood{
-  int my_x; 
-  int my_y;
   int my_identifier;
 
   int my_neighbors_identifiers[NEIGHBORHOOD_SIZE];
