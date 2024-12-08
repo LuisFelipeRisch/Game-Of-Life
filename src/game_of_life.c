@@ -30,8 +30,8 @@ void print_game_of_life_instance(GameOfLifeInstance* instance){
   m = instance->m;
 
   fprintf(stdout, "%d %d\n", n, m);
-  fprintf(stdout, "Alived cells count: %d\n", instance->alived_cells_count);
-  fprintf(stdout, "Dead cells count: %d\n", instance->dead_cells_count);
+  // fprintf(stdout, "Alived cells count: %d\n", instance->alived_cells_count);
+  // fprintf(stdout, "Dead cells count: %d\n", instance->dead_cells_count);
   for (i = 0; i < n; i++)
   {
     for (j = 0; j < m - 1; j++)
@@ -251,10 +251,10 @@ GameOfLifeInstance* compute_immediately_previous_sate(GameOfLifeInstance* instan
       if (strstr(buffer, UNSATISFIABLE) != NULL){
         fprintf(stderr, "\nThe given board is %s\n\n", UNSATISFIABLE);
         exit(EXIT_FAILURE);
-      } else if (strstr(buffer, SATISFIABLE) != NULL)
-          fprintf(stdout, "\nThe given board is %s, but the solution found was not optimality proven\n\n", SATISFIABLE);
-        else if (strstr(buffer, OPTIMUM_FOUND) != NULL) 
-          fprintf(stdout, "\nThe given board is %s and an optimum solution was found!\n\n", SATISFIABLE);
+      } else if (strstr(buffer, SATISFIABLE) != NULL);
+          // fprintf(stdout, "\nThe given board is %s, but the solution found was not optimality proven\n\n", SATISFIABLE);
+        else if (strstr(buffer, OPTIMUM_FOUND) != NULL);
+          // fprintf(stdout, "\nThe given board is %s and an optimum solution was found!\n\n", SATISFIABLE);
     } else if (buffer[0] == 'v') {
       char *token; 
       int x, y, literal_value;
