@@ -23,9 +23,9 @@ int main(){
   print_game_of_life_instance(immediately_previous_sate);
 
   if (valid_previous_game_of_life_instance(immediately_previous_sate, current_instance))
-    fprintf(stdout, "VALID!\n");
+    fprintf(stdout, "\nThe previous board is valid!\n");
   else
-    fprintf(stdout, "INAVLID!\n");  
+    fprintf(stdout, "\nThe previous board is invalid!\n"); 
 
   memory_free_game_of_life_instance(current_instance);
   memory_free_game_of_life_instance(immediately_previous_sate);
